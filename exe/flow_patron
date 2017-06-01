@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+require_relative '../lib/flow_node_patron'
+
+puts '初始化....'
+puts '使用了以下配置'
+puts '*' * 40
+FlowNodePatron::Config.constants.each do |constant|
+  puts "#{constant} = #{FlowNodePatron::Config.const_get(constant)}"
+end
+puts '*' * 40
+
+puts '这些配置都可以通过环境变量指定替换掉'
+
+
+if File.file?('/tmp/clean_success.txt')
+  puts '检测到存在/tmp/clean_success.txt，清理脚本没有正确退出？输入 y  删除该脚本且继续执行，否则退出'
+  inputs = gets
+  if inputs.casecmp('y').zero?
+    File.delete('/tmp/clean_success.txt')
+    puts '退出。。。。。'
+    exit
+  end
+end
+
+# 指定日志
+FlowNodePatron.logger.level = Logger.const_get(FlowNodePatron::Config::PATRON_LOG_LEVEL)
+RestClient.log = FlowNodePatron.logger if FlowNodePatron::Config::PATRON_LOG_LEVEL == 'DEBUG'
+FlowNodePatron::Server.new.init do
+  FlowNodePatron::FlowPromisedLandService.checkin
+end
